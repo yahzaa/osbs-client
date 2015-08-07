@@ -328,6 +328,12 @@ def cli():
                         help="password within OSBS")
     parser.add_argument("--use-kerberos", action='store_true', default=None,
                         help="use kerberos for authentication")
+    parser.add_argument("--kerberos-keytab", action='store',
+                        help="path to kerberos keytab to obtain credentials from")
+    parser.add_argument("--kerberos-principal", action='store',
+                        help="kerberos principal for the provided keytab")
+    parser.add_argument("--kerberos-ccache", action='store',
+                        help="path to credential cache to use instead of the default one")
     parser.add_argument("--verify-ssl", action='store_true', default=None,
                         help="verify CA on secure connections")
     parser.add_argument("--with-auth", action="store_true", dest="use_auth", default=None,

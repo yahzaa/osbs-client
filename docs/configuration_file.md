@@ -55,6 +55,12 @@ Some options are also mandatory.
 
 * `use_kerberos` (*optional*, `boolean`) — when OpenShift is hidden behind authentication proxy, you can use kerberos for authentication
 
+* `kerberos_keytab` (*optional*, `string`) - absolute path to a keytab that will be used to initialize kerberos credentials
+
+* `kerberos_principal` (*optional*, `string`) - kerberos principal for the keytab provided in `kerberos_keytab`
+
+* `kerberos_ccache` (*optional*, `string`) - absolute path to kerberos credential cache to use when `kerberos_keytab` is set (optional)
+
 * `registry_uri` (*optional*, `string`) — docker registry URI to use for pulling and pushing images
 
 * `pulp_registry_name` (*optional*, `string`) — name of pulp registry within dockpulp config

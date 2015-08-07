@@ -9,6 +9,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 import json
 
 import logging
+from osbs.kerberos_ccache import kerberos_ccache_init
 from osbs.build.build_response import BuildResponse
 from osbs.constants import DEFAULT_NAMESPACE, BUILD_FINISHED_STATES, BUILD_RUNNING_STATES, BUILD_CANCELLED_STATE
 from osbs.constants import WATCH_MODIFIED, WATCH_DELETED, WATCH_ERROR
@@ -47,7 +48,8 @@ def check_response(response):
 class Openshift(object):
 
     def __init__(self, openshift_api_url, openshift_oauth_url, verbose=False,
-                 username=None, password=None, use_kerberos=False, verify_ssl=True, use_auth=None):
+                 username=None, password=None, use_kerberos=False, kerberos_keytab=None,
+                 kerberos_principal=None, kerberos_ccache=None, verify_ssl=True, use_auth=None):
         self.os_api_url = openshift_api_url
         self._os_oauth_url = openshift_oauth_url
         self.verbose = verbose
@@ -58,6 +60,9 @@ class Openshift(object):
         self.use_kerberos = use_kerberos
         self.username = username
         self.password = password
+        self.kerberos_keytab = kerberos_keytab
+        self.kerberos_principal = kerberos_principal
+        self.kerberos_ccache = kerberos_ccache
         if use_auth is None:
             self.use_auth = bool(use_kerberos or (username and password))
         else:
@@ -106,6 +111,14 @@ class Openshift(object):
                               username=self.username, password=self.password)
             elif self.use_kerberos:
                 logger.info("using kerberos authentication")
+
+                if self.kerberos_keytab:
+                    if not self.kerberos_principal:
+                        raise OsbsAuthException("You need to provide kerberos principal along "
+                                                "with the keytab path.")
+                    kerberos_ccache_init(self.kerberos_principal, self.kerberos_keytab,
+                                         ccache_file=self.kerberos_ccache)
+
                 r = self._get(url, with_auth=False, allow_redirects=False, kerberos_auth=True)
             else:
                 logger.info("using identity authentication")

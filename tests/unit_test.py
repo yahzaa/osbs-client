@@ -12,6 +12,7 @@ import json
 import os
 import shutil
 import sys
+import datetime
 from types import GeneratorType
 
 from flexmock import flexmock
@@ -31,6 +32,7 @@ from osbs.constants import PROD_WITH_SECRET_BUILD_TYPE
 from osbs.exceptions import OsbsValidationException
 from osbs import utils
 from osbs.http import HttpResponse, parse_headers
+import osbs.kerberos_ccache as kerberos_ccache
 from tests.constants import TEST_BUILD, TEST_LABEL, TEST_LABEL_VALUE
 from tests.constants import TEST_GIT_URI, TEST_GIT_REF, TEST_USER
 from tests.constants import TEST_COMPONENT, TEST_TARGET, TEST_ARCH
@@ -804,3 +806,80 @@ def test_force_str():
         s = u"s"
         assert str_on_2_unicode_on_3(s) == b
         assert str_on_2_unicode_on_3(b) == b
+
+KLIST_RHEL6 = """
+Ticket cache: FILE:/tmp/krb5cc_500
+Default principal: user@REDBAT.COM
+
+Valid starting     Expires            Service principal
+08/10/15 17:36:42  %m/%d/%y %H:%M:%S  krbtgt/REDBAT.COM@REDBAT.COM
+08/11/15 14:13:19  08/12/15 00:13:14  imap/gmail.org@REDBAT.COM
+"""
+
+KLIST_RHEL7 = """
+Ticket cache: FILE:/tmp/krb5cc_1000
+Default principal: user@REDBAT.COM
+
+Valid starting       Expires              Service principal
+08/11/2015 08:43:56  %m/%d/%Y %H:%M:%S  krbtgt/REDBAT.COM@REDBAT.COM
+08/11/2015 14:13:19  08/12/15 00:13:14  imap/gmail.org@REDBAT.COM
+"""
+
+KEYTAB_PATH = '/etc/keytab'
+CCACHE_PATH = '/tmp/krb5cc_thing'
+PRINCIPAL = 'prin@IPAL'
+
+@pytest.mark.parametrize("custom_ccache", [True, False])
+def test_kinit_nocache(custom_ccache):
+    flexmock(kerberos_ccache).should_receive('run') \
+                                   .with_args(['klist']) \
+                                   .and_return(1, "", "") \
+                                   .once()
+    flexmock(kerberos_ccache).should_receive('run') \
+                                   .with_args(['kinit', '-k', '-t', KEYTAB_PATH, PRINCIPAL]) \
+                                   .and_return(0, "", "") \
+                                   .once()
+    flexmock(os.environ).should_receive('__setitem__') \
+                        .with_args("KRB5CCNAME", CCACHE_PATH) \
+                        .times(1 if custom_ccache else 0)
+
+    kerberos_ccache.kerberos_ccache_init(PRINCIPAL, KEYTAB_PATH, CCACHE_PATH if custom_ccache else None)
+
+@pytest.mark.parametrize("klist_format", [KLIST_RHEL6, KLIST_RHEL7])
+@pytest.mark.parametrize("custom_ccache", [True, False])
+def test_kinit_recentcache(klist_format, custom_ccache):
+    yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+    klist_out = yesterday.strftime(klist_format)
+
+    flexmock(kerberos_ccache).should_receive('run') \
+                                   .with_args(['klist']) \
+                                   .and_return(0, klist_out, "") \
+                                   .once()
+    flexmock(kerberos_ccache).should_receive('run') \
+                                   .with_args(['kinit', '-k', '-t', KEYTAB_PATH, PRINCIPAL]) \
+                                   .and_return(0, "", "") \
+                                   .once()
+    flexmock(os.environ).should_receive('__setitem__') \
+                        .with_args("KRB5CCNAME", CCACHE_PATH) \
+                        .times(1 if custom_ccache else 0)
+
+    kerberos_ccache.kerberos_ccache_init(PRINCIPAL, KEYTAB_PATH, CCACHE_PATH if custom_ccache else None)
+
+@pytest.mark.parametrize("klist_format", [KLIST_RHEL6, KLIST_RHEL7])
+@pytest.mark.parametrize("custom_ccache", [True, False])
+def test_kinit_newcache(klist_format, custom_ccache):
+    tomorrow = datetime.datetime.now() + datetime.timedelta(days=1)
+    klist_out = tomorrow.strftime(klist_format)
+
+    flexmock(kerberos_ccache).should_receive('run') \
+                                   .with_args(['klist']) \
+                                   .and_return(0, klist_out, "") \
+                                   .once()
+    flexmock(kerberos_ccache).should_receive('run') \
+                                   .with_args(['kinit', '-k', '-t', KEYTAB_PATH, PRINCIPAL]) \
+                                   .never()
+    flexmock(os.environ).should_receive('__setitem__') \
+                        .with_args("KRB5CCNAME", CCACHE_PATH) \
+                        .times(1 if custom_ccache else 0)
+
+    kerberos_ccache.kerberos_ccache_init(PRINCIPAL, KEYTAB_PATH, CCACHE_PATH if custom_ccache else None)

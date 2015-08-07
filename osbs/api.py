@@ -64,6 +64,9 @@ class OSBS(object):
                             username=self.os_conf.get_username(),
                             password=self.os_conf.get_password(),
                             use_kerberos=self.os_conf.get_use_kerberos(),
+                            kerberos_keytab=self.os_conf.get_kerberos_keytab(),
+                            kerberos_principal=self.os_conf.get_kerberos_principal(),
+                            kerberos_ccache=self.os_conf.get_kerberos_ccache(),
                             use_auth=self.os_conf.get_use_auth(),
                             verify_ssl=self.os_conf.get_verify_ssl())
         self._bm = None
