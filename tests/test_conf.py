@@ -185,3 +185,23 @@ class TestConfiguration(object):
                                      **kwargs)
 
                 assert conf.get_labels() == expected
+
+    @pytest.mark.parametrize(('config', 'kwargs', 'cli_args', 'expected_i', 'expected_is'), [
+        ({'default': {'build_imagestream': 'conf'}},
+         {'build_image': 'kw'},
+         {},
+         'kw', ''),
+
+        ({'default': {'build_imagestream': 'conf'}},
+         {},
+         {'build_image': 'cli'},
+         'cli', ''),
+    ])
+    def test_build_imagestream(self, config, kwargs, cli_args, expected_i,
+                               expected_is):
+        with self.build_cli_args(cli_args) as args:
+            with self.config_file(config) as config_file:
+                conf = Configuration(conf_file=config_file, cli_args=args,
+                                     **kwargs)
+                assert conf.get_build_image() == expected_i
+                assert conf.get_build_imagestream() == expected_is
