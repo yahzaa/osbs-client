@@ -6,7 +6,6 @@ This software may be modified and distributed under the terms
 of the BSD license. See the LICENSE file for details.
 """
 from flexmock import flexmock
-import pycurl
 import six
 import time
 import json
@@ -82,7 +81,6 @@ class TestOpenshift(object):
 
 
     def test_stream_logs(self, openshift):
-        ex = OsbsNetworkException('/', '', pycurl.FOLLOWLOCATION)
         response = flexmock(status_code=httplib.OK)
         (response
             .should_receive('iter_lines')
@@ -92,7 +90,6 @@ class TestOpenshift(object):
         (flexmock(openshift)
             .should_receive('_get')
              # First: timeout in response after 100s
-            .and_raise(ex)
              # Next: return a real response
             .and_return(response))
 
@@ -103,14 +100,6 @@ class TestOpenshift(object):
 
         logs = openshift.stream_logs(TEST_BUILD)
         assert len([log for log in logs]) == 1
-
-    def test_stream_logs_error(self, openshift):
-        ex = OsbsNetworkException('/', '', pycurl.E_COULDNT_RESOLVE_HOST)
-        (flexmock(openshift)
-            .should_receive('_get')
-            .and_raise(ex))
-        with pytest.raises(OsbsNetworkException):
-            list(openshift.stream_logs(TEST_BUILD))
 
     def test_list_builds(self, openshift):
         l = openshift.list_builds()
