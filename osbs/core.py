@@ -11,7 +11,6 @@ import os
 import numbers
 import time
 import base64
-import pycurl
 
 import logging
 from osbs.kerberos_ccache import kerberos_ccache_init
@@ -405,20 +404,12 @@ class Openshift(object):
         while True:
             buildlogs_url = self._build_url("builds/%s/log/" % build_id,
                                             **kwargs)
-            try:
-                response = self._get(buildlogs_url, stream=1,
-                                     headers={'Connection': 'close'})
-            except OsbsNetworkException as ex:
-                # pycurl reports 'empty reply from server' as
-                # FOLLOWLOCATION. Handle this as though there were no
-                # lines returned.
-                if ex.status_code != pycurl.FOLLOWLOCATION:
-                    raise
-            else:
-                check_response(response)
-                for line in response.iter_lines():
-                    last_activity = time.time()
-                    yield line
+            response = self._get(buildlogs_url, stream=1,
+                                 headers={'Connection': 'close'})
+            check_response(response)
+            for line in response.iter_lines():
+                last_activity = time.time()
+                yield line
 
             idle = time.time() - last_activity
             logger.debug("connection closed after %ds", idle)
