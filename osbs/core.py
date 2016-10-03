@@ -43,8 +43,8 @@ logger = logging.getLogger(__name__)
 
 def check_response(response):
     if response.status_code not in (httplib.OK, httplib.CREATED):
-        if hasattr(response, 'text'):
-            content = response.text
+        if hasattr(response, 'content'):
+            content = response.content
         else:
             content = ''.join(response.iter_lines())
 
