@@ -456,6 +456,8 @@ class Openshift(object):
         buildlogs_url = self._build_url("builds/%s/log/" % build_id)
         response = self._get(buildlogs_url, headers={'Connection': 'close'})
         check_response(response)
+        if isinstance(response.content, bytes):
+            return response.content.decode('utf-8')
         return response.content
 
     def list_builds(self, build_config_id=None, koji_task_id=None,
