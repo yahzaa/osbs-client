@@ -11,11 +11,8 @@ abstraction on top of http api calls
 
 from __future__ import print_function, absolute_import, unicode_literals
 
-import re
 import sys
 import json
-import time
-import codecs
 import logging
 from io import BytesIO
 
@@ -26,8 +23,6 @@ try:
     from requests_kerberos import HTTPKerberosAuth
 except ImportError:
     HTTPKerberosAuth = None
-
-
 
 logger = logging.getLogger(__name__)
 
