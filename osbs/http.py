@@ -50,7 +50,7 @@ class HttpSession(object):
                 return stream
 
             with stream as s:
-                content = s.req.content
+                content = s.req.text
                 return HttpResponse(s.status_code, s.headers, content)
         except requests.exceptions.HTTPError as ex:
             raise OsbsNetworkException(url, str(ex), ex.response.status_code,
@@ -130,7 +130,7 @@ class HttpStream(object):
         self.status_code = self.req.status_code
 
     def _get_received_data(self):
-        return self.req.content
+        return self.req.text
 
     def iter_chunks(self):
         return self.req.iter_content(None)
@@ -164,6 +164,4 @@ class HttpResponse(object):
         if check and self.status_code not in (0, requests.codes.OK, requests.codes.CREATED):
             raise OsbsResponseException(self.content, self.status_code)
 
-        if isinstance(self.content, bytes):
-            self.content = self.content.decode('utf-8')
         return json.loads(self.content)
