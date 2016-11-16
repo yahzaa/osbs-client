@@ -407,9 +407,12 @@ class Openshift(object):
             response = self._get(buildlogs_url, stream=1,
                                  headers={'Connection': 'close'})
             check_response(response)
-            for line in response.iter_lines():
-                last_activity = time.time()
-                yield line
+            try:
+                for line in response.iter_lines():
+                    last_activity = time.time()
+                    yield line
+            except httplib.IncompleteRead:
+                pass
 
             idle = time.time() - last_activity
             logger.debug("connection closed after %ds", idle)
