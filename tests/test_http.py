@@ -49,6 +49,10 @@ class TestHttpSession(object):
         assert len(response_multi.headers) > 2
         assert response_multi.headers['content-type'] == 'application/json'
 
+    def test_decoded_json(self, s):
+        inp = ['foo', 'bar', 'baz']
+        assert list(osbs_http.decoded_json(inp)) == inp
+
     def test_single_multi_without_redirs(self, s):
         response_single = s.get("http://httpbin.org/get")
         logger.debug(response_single.headers)
