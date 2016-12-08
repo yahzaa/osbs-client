@@ -26,6 +26,18 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+def decoded_json(iterable):
+    """Return str objects for each JSON string in iterable
+
+    See https://tools.ietf.org/html/rfc4627#section-3
+    """
+    for line in iterable:
+        if isinstance(line, str):
+            yield line
+        else:
+            yield line.decode(requests.utils.guess_json_utf(line))
+
+
 class HttpSession(object):
     def __init__(self, verbose=False):
         self.verbose = verbose
