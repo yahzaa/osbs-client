@@ -589,6 +589,14 @@ class OSBS(object):
         return self.os.get_image_stream_tag(tag_id)
 
     @osbsapi
+    def put_image_stream_tag(self, tag_id, tag):
+        return self.os.put_image_stream_tag(tag_id, tag)
+
+    @osbsapi
+    def ensure_image_stream_tag(self, stream, tag_id, scheduled=False):
+        return self.os.ensure_image_stream_tag(stream, tag_id, scheduled)
+
+    @osbsapi
     def get_image_stream(self, stream_id):
         return self.os.get_image_stream(stream_id)
 

@@ -42,6 +42,26 @@ from .http import HttpSession
 logger = logging.getLogger(__name__)
 
 
+# TODO: Create json for it
+TAG_TEMPLATE = """\
+{
+  "kind": "ImageStreamTag",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "{{IMAGE_STREAM_ID}}:{{TAG_ID}}"
+  },
+  "tag": {
+    "name": "{{TAG_ID}}",
+    "from": {
+      "kind": "DockerImage",
+      "name": "{{REPOSITORY}}:{{TAG_ID}}"
+    },
+    "importPolicy": {}
+  }
+}
+"""
+
+
 def check_response(response):
     if response.status_code not in (httplib.OK, httplib.CREATED):
         if hasattr(response, 'content'):
@@ -704,6 +724,53 @@ class Openshift(object):
         response = self._get(url)
         check_response(response)
         return response
+
+    def put_image_stream_tag(self, tag_id, tag):
+        url = self._build_url("imagestreamtags/%s" % tag_id)
+        response = self._put(url, data=tag,
+                             headers={"Content-Type": "application/json"})
+        check_response(response)
+        return response
+
+    def ensure_image_stream_tag(self, stream, tag_id, scheduled=False):
+        stream_id = stream['metadata']['name']
+        insecure = (stream['metadata']
+                        .get('annotations', {})
+                        .get('openshift.io/image.insecureRepository')
+                    == 'true')
+        repo = stream['spec']['dockerImageRepository']
+        prefixed_tag_id = '{}:{}'.format(stream_id, tag_id)
+
+        changed = False
+        try:
+            tag = self.get_image_stream_tag(prefixed_tag_id).json()
+            logger.debug('image stream tag found: %s', prefixed_tag_id)
+        except OsbsResponseException as exc:
+            if exc.status_code != 404:
+                raise
+
+            logger.debug('image stream tag NOT found: %s', prefixed_tag_id)
+            tag = json.loads(TAG_TEMPLATE)
+            tag['metadata']['name'] = prefixed_tag_id
+            tag['tag']['name'] = tag_id
+            tag['tag']['from']['name'] = '{}:{}'.format(repo, tag_id)
+            changed = True
+
+        if insecure != tag['tag']['importPolicy'].get('insecure', False):
+            tag['tag']['importPolicy']['insecure'] = insecure
+            logger.debug('setting importPolicy.insecure to: %s', insecure)
+            changed = True
+
+        if scheduled != tag['tag']['importPolicy'].get('scheduled', False):
+            tag['tag']['importPolicy']['scheduled'] = scheduled
+            logger.debug('setting importPolicy.scheduled to: %s', scheduled)
+            changed = True
+
+        if changed:
+            logger.debug('modifying image stream tag: %s', prefixed_tag_id)
+            self.put_image_stream_tag(prefixed_tag_id, json.dumps(tag))
+
+        return changed
 
     def get_image_stream(self, stream_id):
         url = self._build_url("imagestreams/%s" % stream_id)
