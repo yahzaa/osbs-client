@@ -90,6 +90,7 @@ class TestOpenshift(object):
         (flexmock(openshift)
             .should_receive('_get')
              # First: timeout in response after 100s
+            .and_raise(httplib.IncompleteRead(''))
              # Next: return a real response
             .and_return(response))
 
