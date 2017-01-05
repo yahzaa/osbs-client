@@ -404,10 +404,11 @@ class Openshift(object):
         while True:
             buildlogs_url = self._build_url("builds/%s/log/" % build_id,
                                             **kwargs)
-            response = self._get(buildlogs_url, stream=1,
-                                 headers={'Connection': 'close'})
-            check_response(response)
             try:
+                response = self._get(buildlogs_url, stream=1,
+                                     headers={'Connection': 'close'})
+                check_response(response)
+
                 for line in decoded_json(response.iter_lines()):
                     last_activity = time.time()
                     yield line
