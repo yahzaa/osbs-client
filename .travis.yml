@@ -6,17 +6,13 @@ python:
   - "3.5"
 # command to install dependencies
 install:
-  - "pip install -r requirements.txt"
-  - "pip install -r tests/requirements.txt"
-  - "pip install pytest-cov coveralls"
-  - "if [[ ${TRAVIS_PYTHON_VERSION%.*} -gt 2 ]]; then pip install -r requirements-py3.txt; fi"
+  - pip install tox-travis
 # command to run tests
-script: py.test -vv tests --cov osbs
+script: tox
 # run in a docker container
 sudo: false
 notifications:
   email: false
-after_success: "coveralls"
 deploy:
   provider: pypi
   user: bkabrda
