@@ -995,8 +995,13 @@ class BuildRequest(object):
             perform_delete = (source_registry is None or
                               source_registry.docker_uri != registry.docker_uri)
             if perform_delete:
-                push_conf = self.dj.dock_json_get_plugin_conf('exit_plugins',
-                                                              'delete_from_registry')
+                try:
+                    push_conf = self.dj.dock_json_get_plugin_conf('exit_plugins',
+                                                                  'delete_from_registry')
+                except IndexError:
+                    perform_delete = False
+
+            if perform_delete:
                 args = push_conf.setdefault('args', {})
                 delete_registries = args.setdefault('registries', {})
                 placeholder = '{{REGISTRY_URI}}'
