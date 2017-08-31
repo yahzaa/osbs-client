@@ -954,7 +954,7 @@ class TestBuildRequest(object):
         ['v2'],
     ])
     @pytest.mark.parametrize('platform', [None, 'x86_64'])
-    @pytest.mark.parametrize('arrangement_version', [3, 4])
+    @pytest.mark.parametrize('arrangement_version', range(3, DEFAULT_ARRANGEMENT_VERSION + 1))
     @pytest.mark.parametrize('scratch', [False, True])
     def test_render_prod_request_v1_v2(self, registry_api_versions, platform, arrangement_version,
                                        scratch):
@@ -1450,10 +1450,8 @@ class TestBuildRequest(object):
         (['x86_64', 'ppc64le'], None, False),
         (None, None, True),
     ))
-    @pytest.mark.parametrize('arrangement_version', [
-        # Only one version defined so far
-        DEFAULT_ARRANGEMENT_VERSION,
-    ])
+    @pytest.mark.parametrize('arrangement_version',
+                             range(3, DEFAULT_ARRANGEMENT_VERSION + 1))
     @pytest.mark.parametrize('koji_parent_build', ['fedora-26-9', None])
     @pytest.mark.parametrize(('build_image', 'build_imagestream', 'worker_build_image', 'valid'), (
         ('fedora:latest', None, 'fedora:latest', True),
@@ -1525,6 +1523,9 @@ class TestBuildRequest(object):
             kwargs['koji_parent_build'] = koji_parent_build
         if prefer_schema1_digest is not None:
             kwargs['prefer_schema1_digest'] = prefer_schema1_digest
+        # required for pulp_ plugins in the orchestrator build
+        if arrangement_version > 3:
+            kwargs['pulp_secret'] = 'pulp_secret'
         kwargs.update(additional_kwargs)
 
         inner_template = ORCHESTRATOR_INNER_TEMPLATE.format(
