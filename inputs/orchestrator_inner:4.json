@@ -72,6 +72,10 @@
         "url": "{{OPENSHIFT_URI}}",
         "verify_ssl": false
       }
+    },
+    {
+      "name": "resolve_composes",
+      "args": {}
     }
   ],
   "buildstep_plugins": [
