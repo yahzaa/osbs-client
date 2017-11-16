@@ -544,7 +544,7 @@ class BuildRequest(object):
         triggers = self.template['spec'].get('triggers', [])
 
         remove_plugins = [
-            ("prebuild_plugins", "check_and_set_rebuild"),
+            # ("prebuild_plugins", "check_and_set_rebuild"),
             ("prebuild_plugins", "stop_autorebuild_if_disabled"),
         ]
 
