@@ -1198,6 +1198,7 @@ class TestArrangementV5(TestArrangementV4):
                 'group_manifests',
                 'pulp_tag',
                 'pulp_sync',
+                'import_image',
             ],
 
             'exit_plugins': [
